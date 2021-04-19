@@ -9,6 +9,10 @@ logging.basicConfig(level=logging.INFO,
         filename='log.txt',
         filemode='a')
 
+def get_redirect_url(s, url):
+    response = s.get(url)
+    return response.url
+
 def checkin(username, password):
 
     s = requests.session()
@@ -16,7 +20,8 @@ def checkin(username, password):
     # --- login ---
     while True:
         try:
-            r = s.get('https://5a5b1b9bd1895cb22de8cc64f0cb2b96ids.v.just.edu.cn/cas/login?service=http%3A%2F%2Fmy.just.edu.cn%2F')
+            nurl = get_redirect_url(s, 'http://vpn2.just.edu.cn')
+            r = s.get(nurl)
             execution = re.search('name="execution" value="(.*?)"', r.text).group(1)    
         except Exception as ex:
             print('error - execution')
@@ -29,7 +34,7 @@ def checkin(username, password):
         'execution': execution,
         '_eventId': 'submit'
     }
-    s.post('https://5a5b1b9bd1895cb22de8cc64f0cb2b96ids.v.just.edu.cn/cas/login?service=http://my.just.edu.cn%2F', data)
+    s.post(nurl, data)
     # --- login end ---
 
 
@@ -93,7 +98,6 @@ def checkin(username, password):
         print('pass')
         # print(r.text)
         ed = r.text.index("$('div[name=sqrid]').sui().setValue(empID);")
-        
         substr = r.text[st:ed]
         result = re.finditer('div\[name=(.*?)\]"\)\.sui\(\)\.setValue\(\'(.*?)\'\);', substr)
         data = dict()
@@ -105,9 +109,8 @@ def checkin(username, password):
         return {"entity": template}
 
     ret = make_data(template.copy())
-
     while True:
-        r = s.post('https://ec43d80978edf4f14590b58d041fc8baids.v.just.edu.cn/default/work/jkd/jkxxtb/com.sudytech.work.suda.jkxxtb.jktbSave.save.biz.ext', json=ret)
+        r = s.post('https://ec43d80978edf4f14590b58d041fc8bacas.v.just.edu.cn/default/work/jkd/jkxxtb/com.sudytech.work.suda.jkxxtb.jktbSave.save.biz.ext', json=ret)
         resp = json.loads(r.text)
         flag = resp['res']
         if flag:
